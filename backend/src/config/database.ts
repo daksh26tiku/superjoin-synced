@@ -20,6 +20,7 @@ interface DatabaseConfig {
   waitForConnections: boolean;
   enableKeepAlive: boolean;
   keepAliveInitialDelay: number;
+  ssl?: {}; // SSL configuration for Aiven MySQL
 }
 
 class DatabaseManager {
@@ -39,6 +40,7 @@ class DatabaseManager {
       waitForConnections: true,
       enableKeepAlive: true,
       keepAliveInitialDelay: 10000,
+      ssl: {}, // Enable SSL for Aiven MySQL
     };
   }
 

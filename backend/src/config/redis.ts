@@ -19,6 +19,8 @@ interface RedisConfig {
   maxRetriesPerRequest: null; // Required for BullMQ
   enableReadyCheck: boolean;
   retryStrategy: (times: number) => number | void;
+  tls?: {}; // TLS configuration for secure connections
+  family: 4; // Force IPv4
 }
 
 class RedisManager {
@@ -35,6 +37,8 @@ class RedisManager {
       db: parseInt(process.env.REDIS_DB || '0', 10),
       maxRetriesPerRequest: null, // BullMQ requirement
       enableReadyCheck: true,
+      family: 4, // Force IPv4
+      tls: {}, // Enable TLS for Aiven Valkey
       retryStrategy: (times: number) => {
         // Exponential backoff with max 30 seconds
         const delay = Math.min(times * 1000, 30000);
