@@ -27,7 +27,6 @@
     "moduleResolution": "node",
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "types": ["node"],
     "baseUrl": "./src",
     "paths": {
       "@config/*": ["config/*"],
