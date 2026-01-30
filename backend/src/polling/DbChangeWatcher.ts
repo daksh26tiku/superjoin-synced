@@ -1,7 +1,7 @@
 import { db } from '../config/database';
 import { getDbToSheetQueue } from '../queues/dbToSheetQueue';
 import { logger } from '../utils/logger';
-import { RowDataPacket } from 'mysql2';
+import { RowDataPacket } from 'mysql2/promise';
 
 interface PendingChange extends RowDataPacket {
   _sync_row_id: string;

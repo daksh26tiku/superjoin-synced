@@ -1,5 +1,5 @@
 import { Job, Worker } from 'bullmq';
-import { RowDataPacket } from 'mysql2';
+import { RowDataPacket } from 'mysql2/promise';
 import { v4 as uuidv4 } from 'uuid';
 import { db } from '../../config/database';
 import { redis } from '../../config/redis';
