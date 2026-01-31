@@ -344,13 +344,18 @@
 </head>
 
 <body>
+  <!-- Inject API URL from environment variables -->
+  <script>
+    window.API_BASE_URL = '%%API_BASE_URL%%' || 'https://superjoin-synced-sgtu.onrender.com';
+  </script>
+  
   <div id="app"></div>
 
   <script>
     (function () {
       // Configuration - Point to your backend API
-      // This will be replaced by Vercel during build
-      const API_BASE_URL = '%%API_BASE_URL%%' || 'http://localhost:3000';
+      // This will be injected by Vercel via environment variable
+      const API_BASE_URL = window.API_BASE_URL || 'https://superjoin-synced-sgtu.onrender.com';
       
       const app = document.getElementById('app');
       let healthData = null;
