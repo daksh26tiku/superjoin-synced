@@ -443,9 +443,9 @@ app.post('/api/webhook', async (req: Request, res: Response) => {
 
       // Insert into sync_sheets
       await db.query(
-        `INSERT INTO sync_sheets (sheet_id, sheet_name, mysql_table_name, webhook_url, is_active)
-         VALUES (?, ?, ?, ?, TRUE)`,
-        [sheetId, sheetName, tableName, '/api/webhook']
+        `INSERT INTO sync_sheets (sheet_id, sheet_name, mysql_table_name, sync_enabled)
+         VALUES (?, ?, ?, TRUE)`,
+        [sheetId, sheetName, tableName]
       );
 
       // Create MySQL table with basic structure
