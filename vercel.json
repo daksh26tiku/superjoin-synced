@@ -12,6 +12,14 @@
       "dest": "/backend/public/dashboard.html"
     },
     {
+      "src": "/dashboard",
+      "dest": "/backend/public/dashboard.html"
+    },
+    {
+      "src": "/dashboard.html",
+      "dest": "/backend/public/dashboard.html"
+    },
+    {
       "src": "/(.*)",
       "dest": "/backend/public/$1"
     }
