@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "node build-frontend.js",
+  "buildCommand": "node backend/public/build-frontend.js",
   "outputDirectory": "public",
   "installCommand": "npm install",
   "builds": [
