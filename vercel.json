@@ -1,27 +1,22 @@
 {
   "version": 2,
+  "buildCommand": "node build-frontend.js",
+  "outputDirectory": "public",
+  "installCommand": "npm install",
   "builds": [
     {
-      "src": "backend/public/**/*",
+      "src": "public/**/*",
       "use": "@vercel/static"
     }
   ],
   "routes": [
     {
-      "src": "/dashboard.html",
-      "dest": "/backend/public/dashboard.html"
-    },
-    {
-      "src": "/test-simple.html",
-      "dest": "/backend/public/test-simple.html"
-    },
-    {
-      "src": "/dashboard-backup.html",
-      "dest": "/backend/public/dashboard-backup.html"
-    },
-    {
       "src": "/",
-      "dest": "/backend/public/dashboard.html"
+      "dest": "/public/dashboard.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/$1"
     }
   ]
 }

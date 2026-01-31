@@ -348,6 +348,10 @@
 
   <script>
     (function () {
+      // Configuration - Point to your backend API
+      // This will be replaced by Vercel during build
+      const API_BASE_URL = '%%API_BASE_URL%%' || 'http://localhost:3000';
+      
       const app = document.getElementById('app');
       let healthData = null;
 
