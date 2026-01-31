@@ -46,10 +46,10 @@ class GoogleSheetsService {
     try {
       // Placeholder: Use provided auth or create from environment
       const authClient = auth || this.createAuthFromEnv();
-      
+
       this.sheets = google.sheets({ version: 'v4', auth: authClient });
       this.initialized = true;
-      
+
       logger.info('GoogleSheetsService initialized successfully');
     } catch (error) {
       logger.error('Failed to initialize GoogleSheetsService', { error });
@@ -59,9 +59,16 @@ class GoogleSheetsService {
 
   /**
    * Create auth client from environment variables.
-   * Supports both Service Account (JSON key) and OAuth2.
+   * Supports Service Account (JSON key), OAuth2, and API Key.
    */
   private createAuthFromEnv(): any {
+    // Check for API key first (simplest)
+    const apiKey = process.env.GOOGLE_API_KEY;
+    if (apiKey) {
+      logger.info('Using Google API Key authentication');
+      return apiKey; // The google client library accepts API keys as auth
+    }
+
     const serviceAccountPath = process.env.GOOGLE_SERVICE_ACCOUNT_PATH;
     const clientEmail = process.env.GOOGLE_CLIENT_EMAIL;
     const privateKey = process.env.GOOGLE_PRIVATE_KEY;
@@ -69,7 +76,7 @@ class GoogleSheetsService {
     if (serviceAccountPath) {
       // Resolve path relative to backend directory
       const resolvedPath = path.resolve(__dirname, '../../', serviceAccountPath);
-      logger.info('Using Google service account', { path: resolvedPath });
+      logger.info('Using Google service account', { path: resolvedPath }); \
       return new google.auth.GoogleAuth({
         keyFile: resolvedPath,
         scopes: ['https://www.googleapis.com/auth/spreadsheets'],
@@ -110,7 +117,7 @@ class GoogleSheetsService {
       if (values[mysqlCol] !== undefined) {
         const range = `${sheetName}!${sheetCol}${row}`;
         const cellValue = this.formatValueForSheet(values[mysqlCol]);
-        
+
         data.push({
           range,
           values: [[cellValue]],
