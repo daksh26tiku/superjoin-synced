@@ -7,6 +7,7 @@
     "dev": "nodemon --exec ts-node src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
+    "init-db": "tsc && node dist/scripts/initDatabase.js",
     "lint": "eslint src/**/*.ts",
     "typecheck": "tsc --noEmit"
   },
