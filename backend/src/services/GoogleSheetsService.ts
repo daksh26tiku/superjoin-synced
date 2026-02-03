@@ -62,23 +62,11 @@ class GoogleSheetsService {
    * Supports Service Account (JSON key), OAuth2, and API Key.
    */
   private createAuthFromEnv(): any {
-    // Check for OAuth credentials first (client ID + secret + refresh token)
-    const clientId = process.env.GOOGLE_CLIENT_ID;
-    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
-
-    if (clientId && clientSecret && refreshToken) {
-      logger.info('Using Google OAuth 2.0 authentication');
-      const oauth2Client = new google.auth.OAuth2(clientId, clientSecret);
-      oauth2Client.setCredentials({ refresh_token: refreshToken });
-      return oauth2Client;
-    }
-
-    // Check for API key (read-only, doesn't support write operations)
+    // Check for API key first (simplest)
     const apiKey = process.env.GOOGLE_API_KEY;
     if (apiKey) {
-      logger.info('Using Google API Key authentication (read-only)');
-      return apiKey;
+      logger.info('Using Google API Key authentication');
+      return apiKey; // The google client library accepts API keys as auth
     }
 
     const serviceAccountPath = process.env.GOOGLE_SERVICE_ACCOUNT_PATH;
