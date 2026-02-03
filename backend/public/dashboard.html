@@ -870,7 +870,7 @@
         btn.textContent = '⏳ Testing...';
 
         try {
-          const res = await fetch('/api/test/simulate-db-change', {
+          const res = await fetch(`${API_BASE_URL}/api/test/simulate-db-change`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' }
           });
