@@ -400,6 +400,149 @@ app.post('/api/test/simulate-db-change', async (req: Request, res: Response) => 
   }
 });
 
+// =============================================================================
+// Google Sheets Webhook Endpoint
+// =============================================================================
+
+/**
+ * Webhook endpoint to receive updates from Google Apps Script
+ * Handles Sheet → Database sync
+ */
+app.post('/api/webhook', async (req: Request, res: Response) => {
+  try {
+    const { sheetId, sheetName, row, column, value, timestamp, userEmail } = req.body;
+
+    // Validate required fields
+    if (!sheetId || !sheetName || !row || column === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields: sheetId, sheetName, row, column',
+      });
+    }
+
+    logger.info('Webhook received', { sheetId, sheetName, row, column, value });
+
+    // Check if sheet is registered
+    const sheetCheck = await db.query<Array<{
+      id: number;
+      mysql_table_name: string;
+      sheet_id: string;
+      sheet_name: string;
+    }>>(
+      'SELECT id, mysql_table_name, sheet_id, sheet_name FROM sync_sheets WHERE sheet_id = ? AND sheet_name = ?',
+      [sheetId, sheetName]
+    );
+
+    let tableName: string;
+
+    if (sheetCheck.length === 0) {
+      // Auto-register new sheet
+      tableName = `sheet_${sheetId.substring(0, 8)}_${sheetName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`;
+
+      logger.info('Auto-registering new sheet', { sheetId, sheetName, tableName });
+
+      // Insert into sync_sheets
+      await db.query(
+        `INSERT INTO sync_sheets (sheet_id, sheet_name, mysql_table_name, sync_enabled)
+         VALUES (?, ?, ?, TRUE)`,
+        [sheetId, sheetName, tableName]
+      );
+
+      // Create MySQL table with basic structure
+      await db.query(
+        `CREATE TABLE IF NOT EXISTS \`${tableName}\` (
+          _sync_row_id INT AUTO_INCREMENT PRIMARY KEY,
+          _sheet_row_number INT UNIQUE,
+          _row_hash VARCHAR(64),
+          _last_modified_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+          _last_modified_by ENUM('SHEET', 'DATABASE', 'SYSTEM') DEFAULT 'SHEET',
+          _sync_status ENUM('SYNCED', 'PENDING', 'CONFLICT', 'ERROR') DEFAULT 'SYNCED',
+          column_data JSON,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          INDEX idx_sheet_row (_sheet_row_number),
+          INDEX idx_modified (_last_modified_at)
+        ) ENGINE=InnoDB`
+      );
+
+      logger.info('Created new table for sheet sync', { tableName });
+    } else {
+      tableName = sheetCheck[0].mysql_table_name;
+    }
+
+    // Convert column letter to number (A=1, B=2, etc.)
+    const columnNumber = typeof column === 'string'
+      ? column.toUpperCase().charCodeAt(0) - 64
+      : column;
+
+    // Check if row exists
+    const existingRow = await db.query<Array<{ _sync_row_id: number; column_data: string }>>(
+      `SELECT _sync_row_id, column_data FROM \`${tableName}\` WHERE _sheet_row_number = ?`,
+      [row]
+    );
+
+    const columnData = existingRow.length > 0 && existingRow[0].column_data
+      ? JSON.parse(existingRow[0].column_data)
+      : {};
+
+    // Update column data
+    columnData[`col_${columnNumber}`] = value;
+
+    if (existingRow.length > 0) {
+      // UPDATE existing row
+      await db.query(
+        `UPDATE \`${tableName}\` 
+         SET column_data = ?,
+             _last_modified_by = 'SHEET',
+             _last_modified_at = NOW()
+         WHERE _sheet_row_number = ?`,
+        [JSON.stringify(columnData), row]
+      );
+
+      logger.info('Updated row from sheet', { tableName, row, column: columnNumber });
+    } else {
+      // INSERT new row
+      await db.query(
+        `INSERT INTO \`${tableName}\` (_sheet_row_number, column_data, _last_modified_by)
+         VALUES (?, ?, 'SHEET')`,
+        [row, JSON.stringify(columnData)]
+      );
+
+      logger.info('Inserted new row from sheet', { tableName, row, column: columnNumber });
+    }
+
+    // Log to audit trail
+    await db.query(
+      `INSERT INTO sync_audit_log (operation_type, table_name, row_id, details)
+       VALUES (?, ?, ?, ?)`,
+      [
+        'SHEET_TO_DB',
+        tableName,
+        row,
+        JSON.stringify({ sheetId, sheetName, row, column: columnNumber, value, userEmail, timestamp })
+      ]
+    );
+
+    return res.json({
+      success: true,
+      message: 'Webhook processed successfully',
+      details: {
+        tableName,
+        row,
+        column: columnNumber,
+        operation: existingRow.length > 0 ? 'UPDATE' : 'INSERT'
+      }
+    });
+
+  } catch (error) {
+    logger.error('Webhook error', { error: (error as Error).message });
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to process webhook',
+      error: (error as Error).message,
+    });
+  }
+});
+
 // Health Dashboard API
 app.get('/api/health-dashboard', async (_req: Request, res: Response) => {
   try {
